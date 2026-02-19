@@ -1,0 +1,35 @@
+- name: Add NodeSource repo (Node 12)
+  become: true
+  shell: curl -fsSL https://rpm.nodesource.com/setup_12.x | bash -
+  args:
+    creates: /etc/yum.repos.d/nodesource-el.repo
+
+- name: Install Node.js
+  become: true
+  shell: yum install -y nodejs
+  args:
+    creates: /usr/bin/node
+
+- name: Verify node version
+  command: node -v
+  register: node_version
+  changed_when: false
+
+- name: Copy sample app
+  become: true
+  copy:
+    src: app.js
+    dest: /home/ec2-user/app.js
+    owner: ec2-user
+    group: ec2-user
+    mode: '0755'
+
+- name: Start sample app (create PID file for idempotency)
+  become: true
+  become_user: ec2-user
+  shell: |
+    nohup node /home/ec2-user/app.js > /home/ec2-user/app.log 2>&1 &
+    echo $! > /home/ec2-user/node-app.pid
+  args:
+    chdir: /home/ec2-user/
+    creates: /home/ec2-user/node-app.pid
