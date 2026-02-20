@@ -20,15 +20,55 @@ ami-0836abe45b78b6960
 ## Partie 1 – Server Orchestration with Ansible 
 
 ### Step 1 - Set Up the Ansible Environment
-Nous avons initialisé la clef d'accès : 
+Nous instalons la collection AWS avec la commande suivante : 
 
-![Exécution locale](td2/scripts/screenshots/access_key.png)
+```
+ansible-galaxy collection install amazon.aws
+```
+
+![Exécution locale](/lab/lab3/screenshots/upload_amazonaws.png) 
+
+Cela permet à Ansible d’utiliser les modules AWS (EC2, security group, etc).
+
+Puis nous avons utilisé la configuration via AWS CLI :
+
+```
+aws configure
+```
+Ce qui nous donne : 
+
+![Exécution locale](/lab/lab3/screenshots/aws_configure.png) 
+
 
 ### Step 2 - Creating EC2 Instances with Ansible 
 
+On crée un fichier de variables `sample-app-vars.yml`, où l'on déploie 3 instances pour simuler une application distribuée, puis nous lançons le playbook avec la commande : 
+
+```
+ansible-playbook -v create_ec2_instances_playbook.yml --extra-vars "@sample-app-vars.yml"
+```
+![Exécution locale](/lab/lab3/screenshots/playbook.png) 
+
+Et on peut les voir dans note console EC2 : 
+
+![Exécution locale](/lab/lab3/screenshots/console_EC2.png) 
+
 ### Step 3 - Configuring Dynamic Inventory 
 
+Nous créons les fichiers comme précisés dans le PDF qui vont nous permettre d'utiliser un inventaire dynamique. 
+Cet inventaire a pour but d'éviter d’écrire les IP à la main et que si les instances changent, Ansible les détecte automatiquement via les tags.
+
+Pour tester cet inventaire, on utilise la commande test donnée par Copilot : 
+```
+ansible-inventory -i inventory.aws_ec2.yml --graph
+``` 
+![Exécution locale](/lab/lab3/screenshots/inventory.png) 
+
+On voit bien le groupe `@sample_app_instances`.
+
+
 ### Step 4 - Deploying the Sample Node.js Application 
+
 
 ### Step 5 - Setting Up Nginx as a Load Balancer 
 

@@ -7,4 +7,4 @@
 - name: Install Node.js
   ansible.builtin.shell: yum install -y nodejs
   args:
-    creates: /usr/bin/node
+    creates: /usr/bin/node 

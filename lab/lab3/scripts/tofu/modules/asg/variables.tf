@@ -37,9 +37,9 @@ variable "app_http_port" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 variable "instance_type" {
-  description = "The type of EC2 instances to deploy (e.g., t2.micro)"
+  description = "The type of EC2 instances to deploy (e.g., t3.micro)"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "instance_refresh" {

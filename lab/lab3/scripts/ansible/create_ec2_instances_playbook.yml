@@ -39,7 +39,7 @@
       amazon.aws.ec2_instance:
         name: "{{ '%s-%d' | format(base_name, item) }}"       
         key_name: "{{ aws_ec2_key_pair.key.name }}"
-        instance_type: t2.micro
+        instance_type: t3.micro
         security_group: "{{ aws_security_group.group_id }}"
         image_id: ami-0836abe45b78b6960
         tags:
