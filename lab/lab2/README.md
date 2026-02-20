@@ -195,9 +195,12 @@ Pour tester si cela fonctionne bien , on change dans `ec2-instances/main.tf` le 
 ```
   tags = {
     Name = var.name
-    Test = "NEW_VERSION"
+    Test = "NEW_VERSION2"
   }
 ```
+
+(Ne pas oublier de push de nouveau sur le repository Github) 
+
 ### Exercice 12 -  Recherchez un module OpenTofu dans le registre Terraform ou dans un autre référentiel public et utilisez-le dans votre configuration
 
 

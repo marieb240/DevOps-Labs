@@ -30,6 +30,6 @@ resource "aws_instance" "sample_app" {
 
   tags = {
     Name = var.name
-    Test = "NEW_VERSION"
+    Test = "NEW_VERSION2"
   }
 }
