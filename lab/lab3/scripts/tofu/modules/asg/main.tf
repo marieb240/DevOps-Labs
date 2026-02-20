@@ -52,9 +52,9 @@ resource "aws_autoscaling_group" "sample_app" {
         min_healthy_percentage = var.instance_refresh.min_healthy_percentage
         max_healthy_percentage = var.instance_refresh.max_healthy_percentage
       }
+    }
   }
 }
-
 data "aws_vpc" "default" {
   default = true
 }
