@@ -300,6 +300,7 @@ Nous créons le fichier `outputs.tf` puis ajoutons le `api-gateway` module à `m
 
 On lance avec la commande : 
 ```
+tofu init
 tofu apply
 ``` 
 Ensuite, OpenTofu affiche un output `api_endpoint` pour nous : "https://g0inpsfu63.execute-api.eu-north-1.amazonaws.com" 
