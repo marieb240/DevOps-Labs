@@ -1,6 +1,3 @@
-provider "aws" {
-  region = "eu-north-1"
-}
 
 resource "aws_security_group" "sample_app" {
   name        = var.name
