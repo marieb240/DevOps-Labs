@@ -157,6 +157,25 @@ Il suffit simplement de modifier la variable.
 
 ## Partie 7 - Using OpenTofu Modules from GitHub 
 
+Nous avons modifié le fichier `ample-app/main.tf` en modifiant la source du module afin qu'elle point vers le repository github suivant : 
+
+```
+module "sample_app" {
+  source   = "github.com/marieb240/DevOps-Labs.git//lab/lab2/td2/scripts/tofu/modules/ec2-instance"
+```
+
+Lorsque nous avons lancé OpenTofu avec les commandes `tofu init` et `tofu apply`, nous avons bien :  
+
+![Exécution locale](td2/scripts/screenshots/tofu_section7.png) 
+
+
+![Exécution locale](td2/scripts/screenshots/hello_section7.png) 
+
+
+### Exercice 11 - Découvrez l'utilisation du versionnage avec les modules en spécifiant une balise Git ou un commit spécifique dans la source du module
+
+### Exercice 12 -  Recherchez un module OpenTofu dans le registre Terraform ou dans un autre référentiel public et utilisez-le dans votre configuration
+
 
 ## Conclusion
 
