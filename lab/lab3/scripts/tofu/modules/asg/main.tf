@@ -46,9 +46,9 @@ resource "aws_autoscaling_group" "sample_app" {
     for_each = var.instance_refresh == null ? [] : [1]
     content {
       strategy      = "Rolling"
-      auto_rollback = var.instance_refresh.auto_rollback
 
       preferences {
+        auto_rollback          = var.instance_refresh.auto_rollback
         min_healthy_percentage = var.instance_refresh.min_healthy_percentage
         max_healthy_percentage = var.instance_refresh.max_healthy_percentage
       }
