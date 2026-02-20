@@ -27,7 +27,7 @@ module "asg" {
 }
 
 module "alb" {
-  source = "github.com/marieb240/DevOps-Labs.git//lab/lab3/scripts/tofu/modules/"
+  source = "../../modules/alb"
 
   name                  = "sample-app-alb" 
   alb_http_port         = 80               
