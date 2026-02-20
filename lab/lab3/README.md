@@ -69,16 +69,98 @@ On voit bien le groupe `@sample_app_instances`.
 
 ### Step 4 - Deploying the Sample Node.js Application 
 
+Lors du déploiement, une erreur est apparue pendant la tâche `Copy sample app`.
+Ansible affichait un message lié à un problème de permissions sur les fichiers temporaires (`chmod: invalid mode: 'A+user:app-user:rx:allow'`).
+
+Ce problème venait de l’utilisation de `become_user: app-user`, combiné à la gestion des fichiers temporaires d’Ansible sur notre environnement local (WSL/Ubuntu).
+
+Pour corriger cela, nous avons ajouté un fichier `ansible.cfg` dans le dossier du lab avec la configuration suivante :
+
+```
+[defaults]
+allow_world_readable_tmpfiles = True
+remote_tmp = /tmp/.ansible-${USER}
+
+[ssh_connection]
+pipelining = True
+```
+Après cela, nous avons bine nos 3 instances qui tournent :
+
+![Exécution locale](/lab/lab3/screenshots/playbook_pm2.png) 
 
 ### Step 5 - Setting Up Nginx as a Load Balancer 
 
+Cette fois-ci, on va créer une nouvelle instance dédiée à Nginx que l'on construit à l'aide de la commande : 
+```
+ansible-playbook -v create_ec2_instances_playbook.yml --extra-vars "@nginx-vars.yml"
+ansible-playbook -v -i inventory.aws_ec2.yml configure_nginx_playbook.yml
+```
+![Exécution locale](/lab/lab3/screenshots/nginx_instance.png) 
+
+et on la voit bien sur notre console EC2 :
+![Exécution locale](/lab/lab3/screenshots/nginx_ec2.png)  
+
+Cela nous montre qu’Ansible génère la config automatiquement. 
+Après, nous avons récupéré l’adresse IP publique de l’instance Nginx `51.20.92.251` via cette commande : 
+```
+aws ec2 describe-instances --filters "Name=tag:Ansible,Values=nginx_instances" --query "Reservations[*].Instances[*].PublicIpAddress" --output text
+```
+ et en filtrant sur le tag Ansible=nginx_instances. L’instance a bien été créée et est accessible publiquement ! 
+
+![Exécution locale](/lab/lab3/screenshots/hello_nginx.png)  
+
+
+
 ### Step 6 - Implementing Rolling Updates 
 
+Après avoir modifié le fichier `app.js` comme demandé dans le PDF, nous relançons le playbook de configuration :
+```
+ansible-playbook -v -i inventory.aws_ec2.yml configure_sample_app_playbook.yml
+```
+Les instances sont bien construites et mises à jour une par une : 
+![Exécution locale](/lab/lab3/screenshots/update_6.png)  
+
+Pour vérifier que le service reste disponible pendant la mise à jour, nous envoyons des requêtes en continu vers l’IP du load balancer : 
+```
+while true; do curl http://51.20.92.251; sleep 1; done
+``` 
+On observe que la réponse change progressivement vers la nouvelle version sans interruption du service.
+![Exécution locale](/lab/lab3/screenshots/rolling_update.png)  
+
+
+Cela confirme que la stratégie de rolling update fonctionne correctement.
 ## Partie 2 -  VM Orchestration with Packer and OpenTofu 
+Dans cette partie, on change complètement d’approche. 
+
+Avec Ansible, on configurait des serveurs après leur création. 
+Ici, on va créer une image machine déjà prête, puis déployer des instances à partir de cette image. 
 
 ### Step 1 - Building a VM Image Using Packer 
 
+On initialise avec :
+```
+packer build sample-app.pkr.hcl
+```
+
+Puis on construit avec : 
+
+```
+packer build sample-app.pkr.hcl
+```
+À la fin, Packer retourne un AMI ID : 
+
+![Exécution locale](/lab/lab3/screenshots/AMI_ID.png)  
+
+On note l'identifiant de l'AMI : `eu-north-1: ami-0ad551d131629bedf`
+
 ### Step 2 - Deploying the VM Image Using OpenTofu 
+
+Maintenant qu’on a une AMI propre, on va : 
+- créer un Auto Scaling Group
+- déployer plusieurs instances
+- gérer la capacité automatiquement
+
+
 
 ### Step 3 - Deploying an Application Load Balancer (ALB) 
 

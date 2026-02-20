@@ -12,15 +12,12 @@ source "amazon-ebs" "amazon_linux" {
   ami_description = "An Amazon Linux 2023 AMI that has a Node.js sample app installed."
   instance_type   = "t3.micro"
   region          = "eu-north-1"
-  source_ami      = "ami-0836abe45b78b6960
+  source_ami      = "ami-0836abe45b78b6960"
   ssh_username    = "ec2-user"
 }
 
 build {
-  sources = [
-    "source.amazon-ebs.amazon_linux"
-  ]
-
+  sources = ["source.amazon-ebs.amazon_linux"]
   provisioner "file" {                                                   
     sources     = ["app.js", "app.config.js"]
     destination = "/tmp/"
