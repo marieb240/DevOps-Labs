@@ -186,7 +186,7 @@ Puis lorsque nous avons la confirmation de la création du tag :
 ![Exécution locale](td2/scripts/screenshots/tag.png) 
 
 
-Nous chnageons la source du module dans `sample-app/main.tf` : 
+Nous changeons la source du module dans `sample-app/main.tf` : 
 ``` 
 source = "github.com/marieb240/DevOps-Labs.git//lab/lab2/td2/scripts/tofu/modules/ec2-instance?ref=v0.1.0"
 ```
@@ -201,18 +201,30 @@ Pour tester si cela fonctionne bien , on change dans `ec2-instances/main.tf` le 
 
 (Ne pas oublier de push de nouveau sur le repository Github) 
 
-### Exercice 12 -  Recherchez un module OpenTofu dans le registre Terraform ou dans un autre référentiel public et utilisez-le dans votre configuration
+Nous avons volontairement laissé la référence du module sur "?ref=v0.1.0" dans `sample-app/main.tf`. Puis nous avons ensuite exécuté les commandes suivantes dans le dossier sample-app :
+
+```
+tofu init -upgrade
+tofu plan
+``` 
+La commande `tofu init -upgrade` force OpenTofu à re-télécharger le module depuis GitHub en respectant la référence spécifiée (ref=v0.1.0) : 
+
+![Exécution locale](td2/scripts/screenshots/upgrade_tofu.png) 
+
+Lors de l’exécution de `tofu plan`, OpenTofu affiche :
+
+![Exécution locale](td2/scripts/screenshots/no_changes.png) 
+
+Cela confirme que malgré la modification du module sur la branche principale, l’infrastructure reste figée sur la version taggée v0.1.0. 
+
+Le déploiement est donc reproductible et indépendant des évolutions du module tant que la référence (ref) n’est pas modifiée. 
 
 
 ## Conclusion
 
-Ce lab nous a permis de comparer plusieurs approches IaC sur AWS :
+Ce lab nous a permis de comparer différentes approches d’Infrastructure as Code sur AWS et de voir leurs avantages en pratique.
 
-- Bash : simple, mais non idempotent,
-- Ansible : idempotent et orienté configuration,
-- Packer : création d’images immutables,
-- OpenTofu : gestion déclarative de l’infrastructure,
-- Modules : standardisation et réutilisation.
+Le script Bash est rapide à mettre en place mais peu robuste. Ansible améliore la configuration grâce à l’idempotence. Packer permet de créer des images propres et reproductibles.
 
-Nous retenons que plus on va vers des outils déclaratifs, plus l’automatisation est fiable, reproductible et maintenable.
+OpenTofu est l’outil le plus complet utilisé dans ce lab : il permet de gérer l’infrastructure de manière déclarative, de suivre l’état des ressources et d’utiliser des modules versionnés pour garantir un déploiement stable et reproductible.
 
