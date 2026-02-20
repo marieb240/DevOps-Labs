@@ -190,7 +190,14 @@ Nous chnageons la source du module dans `sample-app/main.tf` :
 ``` 
 source = "github.com/marieb240/DevOps-Labs.git//lab/lab2/td2/scripts/tofu/modules/ec2-instance?ref=v0.1.0"
 ```
+Pour tester si cela fonctionne bien , on change dans `ec2-instances/main.tf` le nom du tag : 
 
+```
+  tags = {
+    Name = var.name
+    Test = "NEW_VERSION"
+  }
+```
 ### Exercice 12 -  Recherchez un module OpenTofu dans le registre Terraform ou dans un autre référentiel public et utilisez-le dans votre configuration
 
 
