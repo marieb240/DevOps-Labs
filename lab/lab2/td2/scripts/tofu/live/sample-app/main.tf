@@ -20,8 +20,9 @@ variable "instances" {
 }
 
 module "sample_app" {
-source = "github.com/marieb240/DevOps-Labs.git//lab/lab2/td2/scripts/tofu/modules/ec2-instance?ref=v0.1.0"  for_each = var.instances
+source = "github.com/marieb240/DevOps-Labs.git//lab/lab2/td2/scripts/tofu/modules/ec2-instance?ref=v0.1.0" 
 
+  for_each = var.instances
   name          = each.value.name
   instance_type = each.value.instance_type
   port          = each.value.port
