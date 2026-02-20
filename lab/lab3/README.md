@@ -155,11 +155,16 @@ On note l'identifiant de l'AMI : `eu-north-1: ami-0ad551d131629bedf`
 
 ### Step 2 - Deploying the VM Image Using OpenTofu 
 
-Maintenant qu’on a une AMI propre, on va : 
-- créer un Auto Scaling Group
-- déployer plusieurs instances
-- gérer la capacité automatiquement
+Dans ce step, on configure un Launch Template avec l’AMI du Step 1 puis un Auto Scaling Group (ASG) qui va lancer 3 instances automatiquement (desired capacity = 3). 
 
+Ensuite on exécute :
+```
+tofu init 
+tofu apply 
+```
+À la fin, les instances ne sont pas créées “à la main” : c’est l’ASG qui les démarre et les garde au bon nombre. 
+
+![Exécution locale](/lab/lab3/screenshots/AMI_ID.png)  
 
 
 ### Step 3 - Deploying an Application Load Balancer (ALB) 

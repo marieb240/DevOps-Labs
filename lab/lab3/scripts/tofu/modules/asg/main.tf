@@ -40,18 +40,18 @@ resource "aws_autoscaling_group" "sample_app" {
   }
 
   target_group_arns = var.target_group_arns
-  health_check_type = length(var.target_group_arns) > 0 ? "ELB" : "EC2"
+  health_check_type =  "EC2"
 
   dynamic "instance_refresh" {
     for_each = var.instance_refresh == null ? [] : [1]
     content {
-      strategy = "Rolling"
+      strategy      = "Rolling"
+      auto_rollback = var.instance_refresh.auto_rollback
+
       preferences {
         min_healthy_percentage = var.instance_refresh.min_healthy_percentage
         max_healthy_percentage = var.instance_refresh.max_healthy_percentage
-        auto_rollback          = var.instance_refresh.auto_rollback
       }
-    }
   }
 }
 
