@@ -8,7 +8,7 @@ module "asg" {
   name = "sample-app-asg"                                   
 
   # TODO: fill in with your own AMI ID!
-  ami_id        = "ami-0ad551d131629bedf"                   
+  ami_id        = "ami-050af5ef237e622e0"                   
   user_data     = filebase64("${path.module}/user-data.sh") 
   app_http_port = 8080                                      
 
@@ -20,14 +20,15 @@ module "asg" {
   target_group_arns = [module.alb.target_group_arn]
 
   instance_refresh = {
-    min_healthy_percentage = 100  
-    max_healthy_percentage = 200  
-    auto_rollback          = true 
+    min_healthy_percentage = 100
+    max_batch_size         = 1
+    strategy               = "Rolling"
+    auto_rollback          = true
   }
 }
 
 module "alb" {
-  source = "../../modules/alb"
+  source = "github.com/marieb240/DevOps-Labs.git//lab/lab3/scripts/tofu/modules/alb"
 
   name                  = "sample-app-alb" 
   alb_http_port         = 80               

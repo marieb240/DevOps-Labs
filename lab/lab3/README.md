@@ -164,40 +164,147 @@ tofu apply
 ```
 À la fin, les instances ne sont pas créées “à la main” : c’est l’ASG qui les démarre et les garde au bon nombre. 
 
-![Exécution locale](/lab/lab3/screenshots/AMI_ID.png)  
-
-
-
 ### Step 3 - Deploying an Application Load Balancer (ALB) 
-Pour quoi 
+Dans la partie Ansible, on utilisait Nginx. Ici, on utilise un vrai service AWS : ALB.
 
-![Exécution locale](/lab/lab3/screenshots/AMI_ID.png)  
+![Exécution locale](/lab/lab3/screenshots/alb_tofu.png)  
+
+On a à la fin de la compilation de `tofu apply`, on a : `alb_dns_name = "sample-app-alb-2045686205.eu-north-1.elb.amazonaws.com"`
+
+Puis on l'utilise ave la commande : 
+
+```
+curl http://sample-app-alb-2045686205.eu-north-1.elb.amazonaws.com
+
+```
+
+![Exécution locale](/lab/lab3/screenshots/curl_alb.png)  
 
 ### Step 4 - Implementing Rolling Updates with ASG Instance Refresh 
+On fait les modifications dans `main.tf` et `app.js` puis on relance `packer ` avec la commande : 
 
+```
+packer build sample-app.pkr.hcl
+```
+Pour avoir une nouvelle AMI : `ami-050af5ef237e622e0`, que l'on ajoutera à la place de l'ancienne dans `main.tf`. 
+
+Puis on va utiliser pour suivre le changement : 
+```
+while true; do curl "sample-app-alb-2045686205.eu-north-1.elb.amazonaws.com"\; sleep 1; done
+```
 ## Partie 3 - Container Orchestration with Docker and Kubernetes 
 
+Dans cette partie, on change d’approche : l’application est encapsulée dans un conteneur et c’est Kubernetes qui gère automatiquement le déploiement, le scaling et l’orchestration. 
+
 ### Step 1 - Building and Running the Docker Image Locally 
+On commence par transformer notre application Node.js en image Docker. 
+On la construit avec la commande : 
+```
+docker build -t sample-app:v1 .
+docker run -p 8080:8080 sample-app:v1
+```
+Puis on effectue le test avec : 
+```
+curl http://localhost:8080
+```
+On retrouve bien : 
+
+![Exécution locale](/lab/lab3/screenshots/docker_local.png)  
 
 ### Step 2 - Deploying the Application to a Local Kubernetes Cluster 
+Docker exécute un conteneur alors que Kubernetes gère plusieurs conteneurs automatiquement. 
+On va donc créer un deployment avec 3 replicas pour simuler un système distribué avec haute disponibilité. 
+
+Avec les 2 commandes suivantes : 
+```
+kubectl apply -f sample-app-deployment.yaml
+kubectl get pods
+``` 
+![Exécution locale](/lab/lab3/screenshots/pods.png)   
+
+On voit bien 3 pods en running. 
+On crée le fichier  `sample-app-services.yaml` qui permet de configurer le Service, pour exposer les pods via un point d’entrée unique. 
+La commande suivante nous permet de lancer le service : 
+```
+kubectl apply -f sample-app-service.yaml
+``` 
+et 
+```
+curl http://localhost
+```
+d'afficher la sortie 
+
+![Exécution locale](/lab/lab3/screenshots/hello_service.png)  
+
+On ne s’occupe plus des IP individuelles.
 
 ### Step 3 - Performing a Rolling Update 
 
+On modifie l'application : `  res.end('DevOps Base!\n');`. 
+Puis on build une nouvelle image : 
+```
+docker build -t sample-app:v2 .
+```
+On met à jour le Deployement : `image: sample-app:v2` 
+
+![Exécution locale](/lab/lab3/screenshots/v2.png)  
+
 ## Partie 4 - Deploying Applications Using Serverless Orchestration with AWS Lambda 
 
-### Step 1 - Set Up the Working Directory
+Dans cette partie, on va :
+
+- Créer une fonction Lambda 
+- Déployer avec OpenTofu 
+- Exposer via API Gateway 
+- Faire une mise à jour 
+- Observer la différence avec les approches précédentes
+
+L’objectif est de comprendre le modèle serverless. 
+
+### Step 1 - Set Up the Working Directory 
+
+Le dossier est bien créé. 
 
 ### Step 2 - Create the Lambda Function Code 
 
+On crée le fichier `index.js` avec le contenu donné dans le PDF. 
+La fonction : reçoit une requête, renvoie un code 200 et renvoie un texte. 
+
 ### Step 3 - Create the Main OpenTofu Configuration 
+
+Le fichier `main.tf` est créé dans le dossier `lambda-sample`, nous l'ajustons avec nos valeurs, c'est-à-dire, la région : `eu-north-1` 
 
 ### Step 4 - Deploy the Lambda Function 
 
+On lance le déploiement avec les commandes : 
+```
+tofu init
+tofu apply
+```
+
+![Exécution locale](/lab/lab3/screenshots/tofu_lambda.png) 
+
+
+
 ### Step 5 - Verify the Lambda Function 
+
+![Exécution locale](/lab/lab3/screenshots/aws_lambda_console.png) 
+
+La fonction n’est exécutée que lorsqu’elle est appelée. Il n’y a : aucune VM permanente, aucun conteneur à maintenir et aucun scaling à configurer. 
 
 ### Step 6 - Set Up API Gateway to Trigger the Lambda Function 
 
+Nous créons le fichier `outputs.tf` puis ajoutons le `api-gateway` module à `main.tf`.
+
 ### Step 7 - Deploy the API Gateway Configuration 
+
+On lance avec la commande : 
+```
+tofu apply
+``` 
+Ensuite, OpenTofu affiche un output `api_endpoint` pour nous : "https://g0inpsfu63.execute-api.eu-north-1.amazonaws.com" 
+
+![Exécution locale](/lab/lab3/screenshots/api_tofu.png) 
 
 ### Step 8 - Test the API Endpoint 
 
