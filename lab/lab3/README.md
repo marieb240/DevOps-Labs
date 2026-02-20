@@ -167,7 +167,11 @@ tofu apply
 ![Exécution locale](/lab/lab3/screenshots/AMI_ID.png)  
 
 
+
 ### Step 3 - Deploying an Application Load Balancer (ALB) 
+Pour quoi 
+
+![Exécution locale](/lab/lab3/screenshots/AMI_ID.png)  
 
 ### Step 4 - Implementing Rolling Updates with ASG Instance Refresh 
 
