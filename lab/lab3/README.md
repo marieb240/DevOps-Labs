@@ -303,16 +303,55 @@ On lance avec la commande :
 tofu init
 tofu apply
 ``` 
-Ensuite, OpenTofu affiche un output `api_endpoint` pour nous : "https://g0inpsfu63.execute-api.eu-north-1.amazonaws.com" 
+Ensuite, OpenTofu affiche un output `api_endpoint` pour nous : "https://4w7r0c17mf.execute-api.eu-north-1.amazonaws.com" 
 
 ![Exécution locale](/lab/lab3/screenshots/api_tofu.png) 
 
 ### Step 8 - Test the API Endpoint 
 
+On a donc : 
+
+![Exécution locale](/lab/lab3/screenshots/hello_api.png) 
+
+
 ### Step 9 - Update the Lambda Function 
+
+On change "Hello, World!" en "Devops Base!" dans `index.js` puis on relance : 
+
+```
+tofu apply
+``` 
+On a un output `api_endpoint` : "https://4w7r0c17mf.execute-api.eu-north-1.amazonaws.com" qui est la même que précèdement.
+
+![Exécution locale](/lab/lab3/screenshots/newapi.png) 
 
 ### Step 10 - Verify the Update 
 
+Mais lorsque l'on teste : 
+```
+curl https://4w7r0c17mf.execute-api.eu-north-1.amazonaws.com
+```
+La sortie est différente et concorde avec nos changements : 
+
+![Exécution locale](/lab/lab3/screenshots/api_output.png) 
+
+La mise à jour est donc instantanée ! 
+
 ## Clean Up 
+On clean tout avec la commande :
+
+```
+tofu destroy
+``` 
+
+![Exécution locale](/lab/lab3/screenshots/destroy.png) 
 
 ## Conclusion 
+
+Ce lab nous a permis de voir plusieurs façons de déployer une application, du serveur classique jusqu’au serverless. 
+
+On voit bien l’évolution : au début on gère les machines puis les conteneurs et à la fin on ne gère plus que le code. 
+
+Chaque approche a ses avantages selon le besoin mais plus on avance, plus l’infrastructure est abstraite et automatisée. 
+
+Ce lab nous a donc permis de mieux comprendre les différences concrètes entre VM, Kubernetes et Lambda.
