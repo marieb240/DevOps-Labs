@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-export AWS_DEFAULT_REGION="us-east-2"
+export AWS_DEFAULT_REGION="eu-north-1"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Number of instances to launch (can be passed as first arg or via env)
+COUNT="${1:-2}"
 
 # (Fix important) AWS CLI attend du user-data en base64 si on le passe en string
 user_data_b64="$(base64 -w0 "$SCRIPT_DIR/user-data.sh")"
@@ -29,26 +32,26 @@ aws ec2 authorize-security-group-ingress \
   --port 80 \
   --cidr "0.0.0.0/0" > /dev/null
 
-# Launch the EC2 instance
-instance_id="$(aws ec2 run-instances \
-  --image-id "ami-0900fe555666598a2" \
+# Launch instances (compact handling of multiple instances)
+instance_ids=$(aws ec2 run-instances \
+  --image-id "ami-0836abe45b78b6960" \
   --instance-type "t3.micro" \
   --security-group-ids "$security_group_id" \
   --user-data "$user_data_b64" \
   --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=sample-app}]' \
+  --count "$COUNT" \
   --output text \
-  --query Instances[0].InstanceId)"
+  --query 'Instances[*].InstanceId')
 
-# Wait for the instance to be running
-aws ec2 wait instance-running --instance-ids "$instance_id"
+# Wait for all instances
+aws ec2 wait instance-running --instance-ids $instance_ids
 
-# Get public IP
-public_ip="$(aws ec2 describe-instances \
-  --instance-ids "$instance_id" \
-  --output text \
-  --query 'Reservations[0].Instances[0].PublicIpAddress')"
-
-echo "Instance ID = $instance_id"
-echo "Security Group ID = $security_group_id"
-echo "Public IP = $public_ip"
-echo "Test: http://$public_ip"
+# Print InstanceId + PublicIp for each instance
+aws ec2 describe-instances --instance-ids $instance_ids \
+  --output text --query 'Reservations[].Instances[].[InstanceId,PublicIpAddress]' \
+| while read id ip; do
+    echo "Instance ID = $id"
+    echo "Security Group ID = $security_group_id"
+    echo "Public IP = ${ip:-<pending>}"
+    echo "Test: http://${ip:-<pending>}"
+  done

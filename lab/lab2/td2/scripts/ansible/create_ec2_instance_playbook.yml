@@ -24,15 +24,13 @@
       no_log: true
       register: aws_ec2_key_pair
 
-    - name: Create EC2 instance with Amazon Linux 2
+    - name: Create EC2 instance with Amazon Linux 2023
       amazon.aws.ec2_instance:
         name: sample-app-ansible
         key_name: "{{ aws_ec2_key_pair.key.name }}"
         instance_type: t3.micro
         security_group: "{{ aws_security_group.group_id }}"
-        image_id: ami-02781fbdc79017564
-        wait: yes
-        wait_timeout: 500
+        image_id: "{{ lookup('amazon.aws.aws_ssm', '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64', region='eu-north-1') }}"
+        count: 2
         tags:
-          Ansible: ch2_instances
-      register: ec2_instance
+          Ansible: ch2_instances 

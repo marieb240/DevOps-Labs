@@ -33,7 +33,6 @@ Le terminal affiche :
 Listening on port 8080
 ```
 
-
 En ouvrant `http://localhost:8080`, nous avons bien vu le message `Hello, World!` comme sur la photo suivante :
 
 ![Exécution locale](ch1/sample-app/screenshots/localhost.png)

@@ -1,255 +1,172 @@
-# Lab 2 — Managing Infrastructure as Code (IaC)
+# Lab 2 - Managing Infrastructure as Code (IaC)
 
-## TD2 — Bash
+## Objectifs
 
-### Fichiers
-- `td2/scripts/bash/user-data.sh`
-- `td2/scripts/bash/deploy-ec2-instance.sh`
+Le but de ce lab est de mettre en pratique plusieurs outils d’infrastructure as code pour automatiser le déploiement d’une application sur AWS.
 
-### Questions / Réponses
-## Exercice 1 — Que se passe-t-il si on exécute le script une seconde fois ?
+## Partie 1 – Authenticating to AWS on the Command Line
 
-Lors de la seconde exécution du script, celui-ci échoue lors de la création du *Security Group*.
+Nous avons initialisé la clef d'accès : 
 
-AWS retourne une erreur indiquant qu’un *Security Group* avec le même nom existe déjà.
+![Exécution locale](td2/scripts/screenshots/access_key.png)
 
-Cela s’explique par le fait que certaines ressources AWS, comme les *Security Groups*, doivent avoir un **nom unique dans un même VPC**.
-Dans le script, le nom est fixé en dur :
 
-```bash
---group-name "sample-app" 
-```
+## Partie 2 - Deploying an EC2 Instance Using a Bash Script
 
-## Exercice 2 — Déployer plusieurs instances EC2
+Maintenant, nous déployons une instance EC2 en utilisant un script Bash après avoir suivi les indications du PDF, notre instance tourne sur l'URL `http://3.16.38.179` comme on peut le voir sur les images suivantes :
 
-Pour déployer plusieurs instances EC2, le script peut être modifié afin de lancer plusieurs instances simultanément.
+![Exécution locale](td2/scripts/screenshots/terminal_instance.png)
 
-Une première approche consiste à définir une variable indiquant le nombre d'instances :
+![Exécution locale](td2/scripts/screenshots/instance_view.png)
 
-```bash
-COUNT=3
-```
+Les deux modifications que nous avons faite, sont sur la région de l'instance qui était initialement `us-east-2` mais sur nos ordinateurs, elle est par défault initialisée à `eu-north-1` ainsi que l'AMI qui est pour la région `eu-north-1` celle-ci `ami-0836abe45b78b6960`
 
-Puis à utiliser l'option `--count` de la commande AWS CLI :
+### Exercice 1 — Que se passe-t-il si on exécute le script une seconde fois ?
 
-```bash
-aws ec2 run-instances --count $COUNT
-```
+Lors de la seconde exécution, le script échoue et nous donne cette erreur : 
 
-Une autre solution consiste à utiliser une boucle, par exemple une boucle `for`, afin de lancer plusieurs instances successivement.
+"An error occurred (InvalidGroup.Duplicate) when calling the CreateSecurityGroup operation: The security group 'sample-app' already exists for VPC 'vpc-0d3e740846116840d'" 
 
-**Points importants :**
-- Le Security Group doit être créé une seule fois et partagé entre toutes les instances.
-- Le script doit également récupérer et afficher les valeurs `InstanceId` et `PublicIpAddress` de chaque instance déployée.
+On comprend donc qu'elle échoue pendant la création du Security Group, AWS nous renvoie une erreur car un Security Group portant déjà ce nom existe dans le VPC.
 
-Un Security Group doit avoir un nom unique dans un même VPC.
-
-Conclusion
-
-Le script Bash n’est pas idempotent.
-Il ne vérifie pas l’existence préalable des ressources.
-
-## Exercice 2 — Déployer plusieurs instances EC2
-
-Deux solutions sont possibles :
-
-Solution 1 — Utiliser `--count`
+Dans le script, le nom est fixe :
 
 ```bash
-aws ec2 run-instances --count 3
+--group-name "sample-app"
 ```
 
-Solution 2 — Utiliser une boucle
+### Exercice 2 — Déployer plusieurs instances EC2
 
-```bash
-for i in {1..3}; do
-	aws ec2 run-instances ...
-done
-```
+Pour lancer plusieurs instances, on a ajouté une variable `COUNT` dans le script afin de choisir le nombre d’EC2 à créer en passant un argument au script. 
 
-Points importants
+On utilise ensuite l’option `--count` dans la commande `aws ec2 run-instances` pour créer plusieurs machines en une seule fois.
 
-Le Security Group doit être créé une seule fois.
+Le script récupère maintenant plusieurs InstanceId, attend que toutes les instances soient en running puis affiche l’ID et l’IP publique de chacune. 
 
-Il faut récupérer les `InstanceId` et `PublicIpAddress` de chaque instance.
 
-## Section 3 — Ansible
+![Exécution locale](td2/scripts/screenshots/2_instances.png) 
 
-Un playbook Ansible a été utilisé pour :
 
-- Créer un Security Group
-- Créer une Key Pair
-- Déployer une instance EC2
-- Configurer l’instance via un rôle
+## Partie 3 – Deploying an EC2 Instance Using Ansible
 
-L’inventory dynamique `amazon.aws.aws_ec2` a été utilisé.
+Lors de la configuration de `configure_sample_app_playbook.yml` nous avons rencontré une incompatibilité : certaines anciennes instances utilisaient Amazon Linux 2 et `glibc` était trop ancien pour les paquets Node.js fournis par NodeSource. 
 
-## Exercice 3 — Que se passe-t-il si on exécute la configuration deux fois ?
+Pour résoudre cela, nous avons standardisé l'AMI sur Amazon Linux 2023 et adapté l'installation de Node.js (install via NodeSource compatible). 
 
-Lorsque le playbook est exécuté une seconde fois :
+Le playbook récupère donc la dernière AMI Amazon Linux 2023 disponible en `eu-north-1` via un lookup SSM (l'ID d'AMI peut donc varier dans le temps).
 
-- Les ressources existantes ne sont pas recréées.
-- Les tâches déjà appliquées sont ignorées.
-- Aucun doublon n’est généré.
+Nous avons réussi à identifier ce problème avec l'aide de GitHub Copilot.
 
-Conclusion
+![Exécution locale](td2/scripts/screenshots/ansible.png) 
 
-Ansible est idempotent par conception.
-Contrairement à Bash, il vérifie l’état avant d’appliquer les modifications.
 
-## Section 4 — Packer
+### Exercice 3 — Que se passe-t-il si on exécute la configuration deux fois ?
 
-Packer a été utilisé pour créer une AMI personnalisée.
+Lorsque nous relançons, nous ne voyons pas de différences avec la première fois.
 
-Commandes exécutées
+## Partie 4 – Creating a VM Image Using Packer
+
+Nous avons créé un dossier Packer pour mettre les deux fichiers donnés dans le PDF qui seront utilisés pour créer une AMI personnalisée.
+
+Commandes exécutées :
 
 ```bash
 packer init sample-app.pkr.hcl
 packer build sample-app.pkr.hcl
 ```
 
-Résultat
-
-AMI créée :
+1er AMI créée :
 
 ```text
-ami-087fd4fcbe3c24a8b
+eu-north-1: ami-06e79ea0a613a5f7d
 ```
 
-Région : eu-north-1
+![Exécution locale](td2/scripts/screenshots/packer.png) 
 
-## Exercice 4 — Que se passe-t-il si on exécute packer build deux fois ?
 
-Chaque exécution crée une nouvelle AMI.
+### Exercice 5 — Que se passe-t-il si on exécute `packer build` deux fois ?
 
-Cela s’explique par :
+Chaque exécution créera une nouvelle AMI car le nom contient un UUID :
 
 ```hcl
 ami_name = "sample-app-packer-${uuidv4()}"
 ```
-
-Le `uuidv4()` garantit un nom unique à chaque build.
-
-Conclusion
-
-Packer produit une infrastructure immutable :
-chaque build génère une nouvelle image.
-
-## Section 5 — OpenTofu
-
-OpenTofu a été utilisé pour :
-
-- Déployer une instance EC2
-- Utiliser l’AMI créée avec Packer
-- Créer un Security Group
-- Exposer la `public_ip` via un output
-
-## Exercice 5 — Déployer l’infrastructure
-
-Initialisation
-
-```bash
-tofu init
-```
-
-Application
-
-```bash
-tofu apply
-```
-
-AMI utilisée :
+2eme AMI créée :
 
 ```text
-ami-087fd4fcbe3c24a8b
+eu-north-1: ami-038f3e2352c50367d
 ```
+![Exécution locale](td2/scripts/screenshots/packer2.png)  
 
-## Exercice 6 — Tester le déploiement
 
-Récupération de l’IP
+## Partie 5 – Déploiement avec OpenTofu
 
-```bash
-tofu output
-```
+Nous lançons une instance avec OpenTofu grâce à la commande `tofu init` puis `tofu apply`. 
 
-Résultat :
+Lorsque `tofu apply` tourne, l'ID d'une AMI est demandée nous utilisons donc celle créé précédement par Packer `ami-038f3e2352c50367d`.
 
-```text
-public_ip = "51.20.105.56"
-```
+![Exécution locale](td2/scripts/screenshots/tofu.png) 
 
-Test HTTP
+La public ip en sortie output, nous permet de voir ceci sur le web : 
 
-```text
-http://51.20.105.56:8080
-```
+![Exécution locale](td2/scripts/screenshots/tofu2.png) 
 
-Résultat :
+### Exercice 7 —  Que se passe-t-il si vous exécutez `tofu apply` expliquez le comportement de tofu après la destruction des ressources ?
 
-Connection refused
+Lorsque l'on exécute `tofu apply` sans avoir exécuté `tofu destroy`, un message précisant que OpenTofu n'a trouvé aucune différence entre l'infrastructure actuelle et l'ancienne s'affiche :
 
-Explication
+![Exécution locale](td2/scripts/screenshots/tofu_apply.png)
 
-Le Security Group autorise bien le port 8080.
-Aucun service n’écoute sur ce port.
-L’AMI contient le fichier applicatif mais ne lance pas automatiquement Node.js.
-L’infrastructure est correcte, mais l’application n’est pas démarrée.
+On peut donc relancer la commande plusieurs fois sans modifier l'infrastructure.
 
-## Exercice 7 — Mettre à jour la configuration
+### Exercice 8 —  Comment modifieriez-vous le code OpenTofu pour déployer plusieurs instances EC2 ?
 
-Un nouveau tag a été ajouté :
+Pour déployer plusieurs instances EC2 avec OpenTofu, le plus simple est d’utiliser une boucle. 
 
-```hcl
-tags = {
-	Name = "sample-app-tofu"
-	Test = "update"
-}
-```
+Avec `count`, on peut créer N instances à partir d’un seul bloc aws_instance. OpenTofu va générer aws_instance.sample_app[0], [1], etc. 
 
-Après :
+On peut aussi utiliser `for_each` si on veut des identifiants explicites pour chaque instance. Ça évite de dupliquer du code et c’est plus facile à maintenir.
 
-```bash
-tofu apply
-```
+## Partie 6 – Deploying an EC2 Instance Using an OpenTofu Module 
 
-OpenTofu effectue une mise à jour in place.
+Après avoir suivi les modifications précisées dans le PDF, nous lançons OpenTofu avec les mêmes commandes que précédement, ce qui nous donne 2 instances lancées et fonctionnelles : 
 
-Conclusion
+![Exécution locale](td2/scripts/screenshots/tofu_2instances.png)
 
-OpenTofu fonctionne de manière déclarative :
-il compare l’état souhaité à l’état actuel.
+### Exercice 9 — Modify the module to accept additional parameters like `instance_type` and `port`. Update the root module to pass these parameters
 
-## Exercice 8 — Détruire l’infrastructure
+Nous avons rendu le module plus configurable en ajoutant deux variables : instance_type et port. 
 
-```bash
-tofu destroy
-```
+Dans le module, instance_type est utilisé dans la ressource EC2 et port permet d’ouvrir le bon port dans la règle du security group. 
+Ensuite, dans le root module, nous passons ces valeurs à chaque instance via les blocs module.  
 
-Toutes les ressources ont été supprimées correctement.
+Cela nous permet de modifier le type d’instance ou le port sans avoir à changer le code interne du module.
 
-## Section 6 — Modules
+Les changements se trouvent dans les fichiers : **main.tf** et **variables.tf**.  
 
-## Exercice 9 — Créer et utiliser un module
+### Exercice 10 - Utilisez les fonctions `count` ou `for_each` d'OpenTofu pour déployer plusieurs instances sans dupliquer le code dans le module racine  
 
-La configuration EC2 a été transformée en module réutilisable.
+Pour ne pas dupliquer deux blocs module dans le root module, nous avons utilisé `for_each`. 
 
-Exemple :
+Au lieu d’écrire plusieurs fois le même module, nous définissons une liste (ou une map) d’instances puis OpenTofu crée automatiquement une instance pour chaque élément. 
 
-```hcl
-module "sample_app_1" {
-	source = "./modules/ec2"
-}
+Cela permet d’ajouter ou supprimer des instances sans copier-coller du code. 
 
-module "sample_app_2" {
-	source = "./modules/ec2"
-}
-```
+Il suffit simplement de modifier la variable.
 
-Avantages
 
-Réutilisation du code
+## Partie 7 - Using OpenTofu Modules from GitHub 
 
-Meilleure organisation
 
-Scalabilité
+## Conclusion
+
+Ce lab nous a permis de comparer plusieurs approches IaC sur AWS :
+
+- Bash : simple, mais non idempotent,
+- Ansible : idempotent et orienté configuration,
+- Packer : création d’images immutables,
+- OpenTofu : gestion déclarative de l’infrastructure,
+- Modules : standardisation et réutilisation.
+
+Nous retenons que plus on va vers des outils déclaratifs, plus l’automatisation est fiable, reproductible et maintenable.
 

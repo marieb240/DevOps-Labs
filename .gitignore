@@ -1,5 +1,11 @@
+
+# OpenTofu / Terraform
 **/.terraform/
 *.tfstate
 *.tfstate.*
 .terraform.lock.hcl
+crash.log
+crash.*.log
+
+# Node modules
 node_modules/
