@@ -173,6 +173,23 @@ Lorsque nous avons lancé OpenTofu avec les commandes `tofu init` et `tofu apply
 
 
 ### Exercice 11 - Découvrez l'utilisation du versionnage avec les modules en spécifiant une balise Git ou un commit spécifique dans la source du module
+Dans un premier temps, on crée un tag à l'aide des commandes suivantes : 
+
+ ```
+git tag -a v0.1.0 -m "First version of ec2-instance module"
+git push origin main --tags
+ ```
+ 
+(Ces commandes ont été demandées à Copilot)
+Puis lorsque nous avons la confirmation de la création du tag : 
+
+![Exécution locale](td2/scripts/screenshots/tag.png) 
+
+
+Nous chnageons la source du module dans `sample-app/main.tf` : 
+``` 
+source = "github.com/marieb240/DevOps-Labs.git//lab/lab2/td2/scripts/tofu/modules/ec2-instance?ref=v0.1.0"
+```
 
 ### Exercice 12 -  Recherchez un module OpenTofu dans le registre Terraform ou dans un autre référentiel public et utilisez-le dans votre configuration
 
